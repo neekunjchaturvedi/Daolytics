@@ -1,0 +1,46 @@
+type DAO @entity(immutable: false) {
+  "The DAO's address or unique ID"
+  id: ID!
+  "The total number of proposals"
+  proposalCount: BigInt!
+  "The total number of delegates"
+  delegateCount: BigInt!
+  "List of all proposals"
+  proposals: [Proposal!] @derivedFrom(field: "dao")
+}
+
+type Proposal @entity(immutable: false) {
+  "The proposal ID from the contract"
+  id: ID!
+  "Link back to the DAO"
+  dao: DAO!
+  "The address of the proposer"
+  proposer: Bytes!
+  "Description of the proposal"
+  description: String!
+  "The block timestamp when the proposal was created"
+  creationTimestamp: BigInt!
+  "Current state of the proposal (e.g., Pending, Active, Succeeded, Defeated)"
+  state: String!
+  "Votes for the proposal"
+  votesFor: BigInt!
+  "Votes against the proposal"
+  votesAgainst: BigInt!
+  "List of all individual votes"
+  votes: [Vote!] @derivedFrom(field: "proposal")
+}
+
+type Vote @entity(immutable: false) {
+  "A unique ID: proposalId-voterAddress"
+  id: ID!
+  "The proposal this vote is for"
+  proposal: Proposal!
+  "The address of the voter"
+  voter: Bytes!
+  "Whether they voted for (true) or against (false)"
+  support: Boolean!
+  "The voting power (weight) of this vote"
+  weight: BigInt!
+  "The reason for the vote, if any"
+  reason: String
+}
