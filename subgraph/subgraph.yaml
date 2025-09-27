@@ -4,8 +4,9 @@ indexerHints:
 schema:
   file: ./schema.graphql
 dataSources:
+  # --- UNISWAP DATA SOURCE (Existing) ---
   - kind: ethereum
-    name: GovernorBravo
+    name: UniswapGovernor
     network: mainnet
     source:
       address: "0x408ED6354d4973f66138C91495F2f2FCbd8724C3"
@@ -13,26 +14,44 @@ dataSources:
       startBlock: 18211425
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.9
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
-        - NewAdmin
-        - NewImplementation
-        - NewPendingAdmin
-        - ProposalCanceled
-        - ProposalCreated
-        - ProposalExecuted
-        - ProposalQueued
-        - ProposalThresholdSet
-        - VoteCast
-        - VotingDelaySet
-        - VotingPeriodSet
+        - Proposal
+        - Vote
+        - DAO
       abis:
         - name: GovernorBravo
           file: ./abis/GovernorBravo.json
       eventHandlers:
-        - event: ProposalCreated(uint256,address,address[],uint256[],string[],bytes[],uint256,uint256,string)
+        - event: ProposalCreated(...) # Full signature
           handler: handleProposalCreated
         - event: VoteCast(indexed address,uint256,uint8,uint256,string)
           handler: handleVoteCast
       file: ./src/governor-bravo.ts
+
+  # --- ARBITRUM DATA SOURCE (New) ---
+  - kind: ethereum
+    name: ArbitrumGovernor
+    network: arbitrum-one # <-- Important: correct network
+    source:
+      address: "0x7890f5283A1444d3247854616B9A1e6872951B7f"
+      abi: ArbitrumGovernor # <-- Use the name of the new ABI
+      startBlock: 126934845 # A recent start block on Arbitrum
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities: # Must list the entities this source will interact with
+        - Proposal
+        - Vote
+        - DAO
+      abis: # Add the new ABI file here
+        - name: ArbitrumGovernor
+          file: ./abis/ArbitrumGovernor.json
+      eventHandlers: # Assuming the events are the same. If not, adjust them.
+        - event: ProposalCreated(...) # Full signature
+          handler: handleProposalCreated
+        - event: VoteCast(indexed address,uint256,uint8,uint256,string)
+          handler: handleVoteCast
+      file: ./src/governor-bravo.ts # Pointing to the same mapping file

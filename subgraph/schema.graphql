@@ -1,6 +1,8 @@
 type DAO @entity(immutable: false) {
-  "The DAO's address or unique ID"
+  "The DAO's contract address"
   id: ID!
+  "The common name of the DAO, e.g., 'Uniswap', 'Arbitrum'"
+  name: String!
   "The total number of proposals"
   proposalCount: BigInt!
   "The total number of delegates"
@@ -43,4 +45,20 @@ type Vote @entity(immutable: false) {
   weight: BigInt!
   "The reason for the vote, if any"
   reason: String
+}
+
+query GetSingleProposal($id: ID!) {
+  proposal(id: $id) {
+    id
+    description
+    proposer
+    # ... all other proposal fields
+    votes(first: 100) {
+      id
+      voter
+      support
+      weight
+      reason
+    }
+  }
 }

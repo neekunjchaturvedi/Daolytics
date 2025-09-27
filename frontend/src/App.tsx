@@ -1,44 +1,33 @@
-import { gql } from "@apollo/client";
-import { useQuery } from "@apollo/client/react";
-import "./App.css";
+import { Switch, Route } from "wouter";
+import { ApolloProvider } from "@apollo/client/react";
+import { apolloClient } from "./lib/apollo";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "./components/ThemeProvider";
+import { ProposalList } from "./pages/ProposalList";
+import { ProposalDetail } from "./pages/ProposalDetail";
+import NotFound from "@/pages/not-found";
 
-// 1. Define your GraphQL query
-const GET_PROPOSALS = gql`
-  query GetProposals {
-    proposals(first: 5, orderBy: creationTimestamp, orderDirection: desc) {
-      id
-      proposer
-      description
-      votesFor
-      votesAgainst
-    }
-  }
-`;
+function Router() {
+  return (
+    <Switch>
+      <Route path="/" component={ProposalList} />
+      <Route path="/proposal/:proposalId" component={ProposalDetail} />
+      <Route component={NotFound} />
+    </Switch>
+  );
+}
 
 function App() {
-  // 2. Execute the query
-  const { loading, error, data } = useQuery(GET_PROPOSALS);
-
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error :( {error.message}</p>;
-
-  // 3. Render the data
   return (
-    <div>
-      <h1>DAOlytics</h1>
-      <h2>Latest Uniswap Proposals</h2>
-      {data.proposals.map((proposal: any) => (
-        <div
-          key={proposal.id}
-          style={{ border: "1px solid #ccc", margin: "10px", padding: "10px" }}
-        >
-          <h3>{proposal.description.slice(0, 50)}...</h3>
-          <p>Proposer: {proposal.proposer}</p>
-          <p>Votes For: {proposal.votesFor}</p>
-          <p>Votes Against: {proposal.votesAgainst}</p>
-        </div>
-      ))}
-    </div>
+    <ApolloProvider client={apolloClient}>
+      <ThemeProvider defaultTheme="light" storageKey="daolytics-theme">
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </ThemeProvider>
+    </ApolloProvider>
   );
 }
 

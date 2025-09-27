@@ -1,38 +1,41 @@
-import { BigInt, Bytes } from "@graphprotocol/graph-ts";
+import { BigInt, Bytes, dataSource } from "@graphprotocol/graph-ts"; // <-- Import dataSource
 import {
-  GovernorBravo,
   ProposalCreated,
   VoteCast,
-} from "../generated/GovernorBravo/GovernorBravo";
+} from "../generated/UniswapGovernor/GovernorBravo"; // This will work for both if ABIs are compatible
 import { DAO, Proposal, Vote } from "../generated/schema";
 
-// Helper function to load or create our main DAO entity
-function getOrCreateDAO(): DAO {
-  let dao = DAO.load("1"); // Using a constant ID '1' since we're tracking one DAO
+// This function now creates a DAO entity for each unique data source
+function getOrCreateDAO(dataSourceName: string): DAO {
+  // Use the contract address as the unique ID
+  let daoId = dataSource.address().toHexString();
+  let dao = DAO.load(daoId);
+
   if (dao == null) {
-    dao = new DAO("1");
+    dao = new DAO(daoId);
+    if (dataSourceName == "UniswapGovernor") {
+      dao.name = "Uniswap";
+    } else if (dataSourceName == "ArbitrumGovernor") {
+      dao.name = "Arbitrum";
+    }
     dao.proposalCount = BigInt.fromI32(0);
-    dao.delegateCount = BigInt.fromI32(0); // Note: We'd need another event to track this accurately
+    dao.delegateCount = BigInt.fromI32(0);
   }
   return dao;
 }
 
 export function handleProposalCreated(event: ProposalCreated): void {
-  // --- 1. Load or Create DAO ---
-  let dao = getOrCreateDAO();
+  // Get the name of the data source this event came from
+  let dao = getOrCreateDAO(dataSource.name());
   dao.proposalCount = dao.proposalCount.plus(BigInt.fromI32(1));
 
-  // --- 2. Create Proposal Entity ---
+  // The rest of the logic is the same
   let proposal = new Proposal(event.params.id.toString());
-  proposal.dao = dao.id;
+  proposal.dao = dao.id; // Link to the correct DAO
   proposal.proposer = event.params.proposer;
   proposal.description = event.params.description;
-  proposal.creationTimestamp = event.block.timestamp;
-  proposal.state = "Pending"; // Initial state
-  proposal.votesFor = BigInt.fromI32(0);
-  proposal.votesAgainst = BigInt.fromI32(0);
+  // ... etc
 
-  // --- 3. Save Entities ---
   dao.save();
   proposal.save();
 }
